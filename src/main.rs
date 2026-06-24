@@ -16,10 +16,14 @@ use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
 
 mod error;
+mod web;
 
 #[tokio::main]
 async fn main() {
-    let app = Router::new().merge(routes_hello()).merge(routes_static());
+    let app = Router::new()
+        .merge(routes_hello())
+        .fallback_service(routes_static())
+        .merge(web::routes_login::routes());
 
     let listener = TcpListener::bind("127.0.0.1:8080").await.unwrap();
 
