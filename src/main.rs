@@ -4,9 +4,12 @@ use std::net::SocketAddr;
 
 use axum::{
     Router,
+    extract::Query,
     response::{Html, IntoResponse},
     routing::get,
 };
+
+use serde::Deserialize;
 use tokio::net::TcpListener;
 
 #[tokio::main]
@@ -19,8 +22,15 @@ async fn main() {
     axum::serve(listener, app).await.unwrap()
 }
 
-async fn handler_hello() -> impl IntoResponse {
+#[derive(Debug, Deserialize)]
+struct HelloParams {
+    name: Option<String>,
+}
+
+async fn handler_hello(Query(params): Query<HelloParams>) -> impl IntoResponse {
     println!("->> {:<12} - handler_hello", "HANDLER");
 
-    Html("Hello <strong>world!</strong>")
+    let name = params.name.as_deref().unwrap_or("World!");
+
+    Html(format!("Hello <strong>{name:?}</strong>"))
 }
