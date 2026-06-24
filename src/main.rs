@@ -14,14 +14,18 @@ use tokio::net::TcpListener;
 
 #[tokio::main]
 async fn main() {
-    let app = Router::new()
-        .route("/hello", get(handler_hello))
-        .route("/hello2/{:name}", get(handler_hello2));
+    let app = Router::new().merge(routes_hello());
 
     let listener = TcpListener::bind("127.0.0.1:8080").await.unwrap();
 
     println!("--> LISTENING on 127.0.0.1:8080\n");
     axum::serve(listener, app).await.unwrap()
+}
+
+fn routes_hello() -> Router {
+    Router::new()
+        .route("/hello", get(handler_hello))
+        .route("/hello2/{:name}", get(handler_hello2))
 }
 
 #[derive(Debug, Deserialize)]
