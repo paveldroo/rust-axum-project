@@ -1,5 +1,7 @@
 #![allow(unused)]
 
+use crate::model::ModelController;
+
 pub use self::error::{Error, Result};
 
 use std::net::SocketAddr;
@@ -22,10 +24,13 @@ mod model;
 mod web;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
+    let mc = ModelController::new().await?;
+
     let app = Router::new()
         .merge(routes_hello())
         .merge(web::routes_login::routes())
+        .nest("/api", web::routes_tickets::routes(mc.clone()))
         .layer(middleware::map_response(main_response_mapper))
         .layer(CookieManagerLayer::new())
         .fallback_service(routes_static());
@@ -33,7 +38,9 @@ async fn main() {
     let listener = TcpListener::bind("127.0.0.1:8080").await.unwrap();
 
     println!("--> LISTENING on 127.0.0.1:8080\n");
-    axum::serve(listener, app).await.unwrap()
+    axum::serve(listener, app).await.unwrap();
+
+    Ok(())
 }
 
 async fn main_response_mapper(res: Response) -> Response {
