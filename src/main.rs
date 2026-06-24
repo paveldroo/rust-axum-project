@@ -7,7 +7,8 @@ use std::net::SocketAddr;
 use axum::{
     Router,
     extract::{Path, Query},
-    response::{Html, IntoResponse},
+    middleware,
+    response::{Html, IntoResponse, Response},
     routing::{get, get_service},
 };
 
@@ -22,13 +23,20 @@ mod web;
 async fn main() {
     let app = Router::new()
         .merge(routes_hello())
-        .fallback_service(routes_static())
-        .merge(web::routes_login::routes());
+        .merge(web::routes_login::routes())
+        .layer(middleware::map_response(main_response_mapper))
+        .fallback_service(routes_static());
 
     let listener = TcpListener::bind("127.0.0.1:8080").await.unwrap();
 
     println!("--> LISTENING on 127.0.0.1:8080\n");
     axum::serve(listener, app).await.unwrap()
+}
+
+async fn main_response_mapper(res: Response) -> Response {
+    println!("->> {:<12} - main_response_mapper", "RES_MAPPER");
+    println!();
+    res
 }
 
 fn routes_hello() -> Router {
