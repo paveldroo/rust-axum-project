@@ -1,5 +1,7 @@
 #![allow(unused)]
 
+pub use self::error::{Error, Result};
+
 use std::net::SocketAddr;
 
 use axum::{
@@ -12,6 +14,8 @@ use axum::{
 use serde::Deserialize;
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
+
+mod error;
 
 #[tokio::main]
 async fn main() {
