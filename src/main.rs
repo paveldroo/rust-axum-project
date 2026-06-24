@@ -4,7 +4,7 @@ use std::net::SocketAddr;
 
 use axum::{
     Router,
-    extract::Query,
+    extract::{Path, Query},
     response::{Html, IntoResponse},
     routing::get,
 };
@@ -14,7 +14,9 @@ use tokio::net::TcpListener;
 
 #[tokio::main]
 async fn main() {
-    let app = Router::new().route("/hello", get(handler_hello));
+    let app = Router::new()
+        .route("/hello", get(handler_hello))
+        .route("/hello2/{:name}", get(handler_hello2));
 
     let listener = TcpListener::bind("127.0.0.1:8080").await.unwrap();
 
@@ -33,4 +35,10 @@ async fn handler_hello(Query(params): Query<HelloParams>) -> impl IntoResponse {
     let name = params.name.as_deref().unwrap_or("World!");
 
     Html(format!("Hello <strong>{name:?}</strong>"))
+}
+
+async fn handler_hello2(Path(name): Path<String>) -> impl IntoResponse {
+    println!("->> {:<12} - handler_hello2", "HANDLER");
+
+    Html(format!("Hello2 <strong>{name:?}</strong>"))
 }
