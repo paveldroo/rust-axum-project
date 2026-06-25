@@ -1,6 +1,6 @@
 #![allow(unused)]
 
-use crate::model::ModelController;
+use crate::{ctx::Ctx, log::log_request, model::ModelController};
 
 pub use self::error::{Error, Result};
 
@@ -9,7 +9,7 @@ use std::net::SocketAddr;
 use axum::{
     Json, Router,
     extract::{Path, Query},
-    http::status,
+    http::{Method, Uri, status},
     middleware,
     response::{Html, IntoResponse, Response},
     routing::{get, get_service},
@@ -24,6 +24,7 @@ use uuid::Uuid;
 
 mod ctx;
 mod error;
+mod log;
 mod model;
 mod web;
 
@@ -54,7 +55,12 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn main_response_mapper(res: Response) -> Response {
+async fn main_response_mapper(
+    ctx: Option<Ctx>,
+    uri: Uri,
+    req_method: Method,
+    res: Response,
+) -> Response {
     println!("->> {:<12} - main_response_mapper", "RES_MAPPER");
     println!();
 
@@ -77,7 +83,8 @@ async fn main_response_mapper(res: Response) -> Response {
             (*status_code, Json(client_error_body)).into_response()
         });
 
-    println!("  ->> server log line -- {uuid} -- Error: {service_error:?}");
+    let client_error = client_status_error.unzip().1;
+    log_request(uuid, req_method, uri, ctx, service_error, client_error).await;
 
     error_response.unwrap_or(res)
 }

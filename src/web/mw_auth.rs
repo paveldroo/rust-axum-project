@@ -1,6 +1,6 @@
 use axum::RequestPartsExt;
 use axum::body::Body;
-use axum::extract::{FromRequestParts, State};
+use axum::extract::{FromRequestParts, OptionalFromRequestParts, State};
 use axum::http::Request;
 use axum::http::request::Parts;
 use axum::middleware::Next;
@@ -51,12 +51,24 @@ impl<S: Send + Sync> FromRequestParts<S> for Ctx {
     type Rejection = Error;
 
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self> {
-        println!("->> {:<12} - from_request_parts", "EXTRACTOR");
+        println!("->> {:<12} - Ctx::from_request_parts", "EXTRACTOR");
         parts
             .extensions
             .get::<Result<Ctx>>()
             .ok_or(Error::AuthFailCtxNotInRequestExt)?
             .clone()
+    }
+}
+
+impl<S: Send + Sync> OptionalFromRequestParts<S> for Ctx {
+    type Rejection = Error;
+
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Option<Self>> {
+        println!("->> {:<12} - Ctx::from_request_parts (opt)", "EXTRACTOR");
+        Ok(parts
+            .extensions
+            .get::<Result<Ctx>>()
+            .and_then(|r| r.clone().ok()))
     }
 }
 
